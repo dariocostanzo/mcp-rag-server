@@ -3,7 +3,7 @@ import logging
 from dotenv import load_dotenv
 
 # FastMCP imports - updated to use the correct imports
-from fastmcp import App as MCPApp
+from fastmcp import FastMCP as MCPApp
 from fastmcp import Service, Tool
 
 # Langchain imports
