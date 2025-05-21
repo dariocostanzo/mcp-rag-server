@@ -2,8 +2,9 @@ import os
 import logging
 from dotenv import load_dotenv
 
-# FastMCP imports
-from fastmcp import MCPApp, Service, Tool
+# FastMCP imports - updated to use the correct imports
+from fastmcp import App as MCPApp
+from fastmcp import Service, Tool
 
 # Langchain imports
 from langchain_community.llms import Ollama

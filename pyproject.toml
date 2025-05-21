@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "mcp-server-rag-ollama-langchain"
+name = "mcp-rag-server"
 version = "0.1.0"
 description = "A simple PDF RAG application using FastMCP, Ollama, and Langchain"
 authors = ["Dario <your-email@example.com>"]
