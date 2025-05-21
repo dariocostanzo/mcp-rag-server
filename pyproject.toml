@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "basic-mcp-rag-ollama"
+version = "0.1.0"
+description = "A beginner-friendly RAG application with FastMCP, Ollama, and Langchain."
+authors = ["Your Name <you@example.com>"] # Feel free to change this
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"  # We need Python 3.9 or newer
+fastmcp = "^2.0.0"
+langchain = "~0.1.16"
+langchain-community = "~0.0.32" # For Ollama, FAISS, PyPDFLoader
+langchain-core = "~0.1.42"
+pypdf = "^4.0.1"                # For loading PDF files
+faiss-cpu = "^1.8.0"            # For the vector store (CPU version)
+python-dotenv = "^1.0.1"        # For loading .env files
+ollama = "^0.2.0"               # Official Ollama client (optional, langchain-community also has Ollama)
+
+[tool.poetry.group.dev.dependencies]
+# You can add development tools like pytest here later if needed
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
