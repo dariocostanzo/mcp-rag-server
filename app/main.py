@@ -2,10 +2,8 @@ import os
 import logging
 from dotenv import load_dotenv
 
-# FastMCP
-from fastmcp import FastMCP, Service
+from fastmcp import FastMCP
 
-# LangChain
 from langchain_community.llms import Ollama
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.document_loaders import PyPDFLoader
@@ -17,27 +15,20 @@ from langchain.chains import RetrievalQA
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Load .env
+# Load env
 load_dotenv()
 
-# Paths & Config
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "..", "data")
-PROMPT_FILE_PATH = os.path.join(BASE_DIR, "..", "prompt.txt")
+# Configuration
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
+PROMPT_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "prompt.txt")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral")
 
-# Init FastMCP
+# FastMCP App Init
 mcp_app = FastMCP(title="PDF RAG Application")
-pdf_query_service = Service(
-    name="pdf_query_service",
-    title="PDF Query Service",
-    description="Service to query PDF documents using RAG"
-)
-mcp_app.add_service(pdf_query_service)
 
-
-def load_prompt_template() -> str | None:
+# Load Prompt Template
+def load_prompt_template():
     try:
         with open(PROMPT_FILE_PATH, "r", encoding="utf-8") as f:
             return f.read()
@@ -45,8 +36,8 @@ def load_prompt_template() -> str | None:
         logger.error(f"Error loading prompt template: {e}")
         return None
 
-
-def load_documents() -> list:
+# Load Documents
+def load_documents():
     documents = []
 
     if not os.path.exists(DATA_DIR):
@@ -54,7 +45,7 @@ def load_documents() -> list:
         logger.info(f"Created data directory at {DATA_DIR}")
         return documents
 
-    pdf_files = [f for f in os.listdir(DATA_DIR) if f.lower().endswith('.pdf')]
+    pdf_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.pdf')]
 
     if not pdf_files:
         logger.warning("No PDF files found in the data directory.")
@@ -71,20 +62,18 @@ def load_documents() -> list:
 
     return documents
 
-
-def split_documents(documents: list) -> list:
+# Split Documents
+def split_documents(documents):
     if not documents:
         return []
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     return text_splitter.split_documents(documents)
 
-
-# Embeddings & LLM
+# Initialize
 embeddings = OllamaEmbeddings(base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL)
 llm = Ollama(base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL)
 
-# Load & Split
 documents = load_documents()
 chunks = split_documents(documents)
 
@@ -107,12 +96,11 @@ if chunks:
     except Exception as e:
         logger.error(f"Error initializing RAG pipeline: {e}")
 
-
-@pdf_query_service.tool
-def query_documents(question: str) -> dict:
+# Tool definition
+@mcp_app.tool
+def query_documents(question: str):
     """
     Query the PDF documents with a question.
-    Returns a dictionary with the answer and sources.
     """
     if not qa_chain:
         return {
@@ -122,33 +110,33 @@ def query_documents(question: str) -> dict:
 
     try:
         result = qa_chain({"query": question})
-        sources = []
 
-        for doc in result.get("source_documents", []):
-            sources.append({
-                "page": doc.metadata.get("page", "Unknown"),
-                "source": doc.metadata.get("source", "Unknown")
-            })
+        sources = []
+        if "source_documents" in result:
+            for doc in result["source_documents"]:
+                sources.append({
+                    "page": doc.metadata.get("page", "Unknown"),
+                    "source": doc.metadata.get("source", "Unknown")
+                })
 
         return {
-            "answer": result.get("result", "No answer generated."),
+            "answer": result["result"],
             "sources": sources
         }
-
     except Exception as e:
         return {
             "answer": f"Error processing your question: {str(e)}",
             "sources": []
         }
 
-
-# Startup Info
+# Info
 logger.info("PDF RAG Application is running")
 logger.info(f"Data directory: {DATA_DIR}")
 logger.info(f"Loaded {len(documents)} documents")
 logger.info(f"Created {len(chunks)} chunks")
 logger.info(f"Using Ollama model: {OLLAMA_MODEL}")
 
+# Run
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:mcp_app", host="0.0.0.0", port=8765)
